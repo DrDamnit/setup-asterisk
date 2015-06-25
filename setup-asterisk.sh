@@ -67,6 +67,7 @@ if [ "$1" = "--lamp" ];
 	then
 	echo Installing LAMP...
 	apt-get install apache2 apachetop mysql-server mysql-client php5 php5-cli php5-gd php5-imagick php5-imap php5-mcrypt php5-mhash php5-mysql php5-pgsql libmysqlclient-dev libcurl3-openssl-dev
+	exit
 fi	
 
 function compile_libpri ()
@@ -79,6 +80,13 @@ function compile_libpri ()
 	echo "Compiling libpri."
 	read -p "Press [ENTER] to continue..."
 	make
+}
+
+function compile_dahdi_all() {
+	cd /usr/src/dahdi/
+	make all
+	make install
+	
 }
 
 function compile_dahdhi_kernel ()
@@ -148,15 +156,16 @@ then
 		echo "Setting up user..."
 		setupUser asterisk
 	fi
+	compile_dahdi_all
 	compile_libpri
-	compile_dahdhi_kernel
-	compile_dahdi_tools
+	echo "Fixing premissions. Setting asterisk:asterisk as the owner:group for the asterisk installation directory..."
+	chown -R asterisk:asterisk /usr/src/asterisk
 	echo "Everything but Asterisk has been compiled. Now, you need to create the non-root user ('asterisk'?), and compile using the following configure script:"
 	echo ""
 	echo "su asterisk"
 	echo "cd /usr/src/asterisk"
 	echo "make clean"
-	echo "./configure --prefix=$HOME/asterisk-bin --sysconfdir=$HOME/asterisk-bin --localstatedir=$HOME/asterisk-bin"
+	echo "./configure --prefix=/home/asterisk/asterisk-bin --sysconfdir=/home/asterisk/asterisk-bin --localstatedir=/home/asterisk/asterisk-bin"
 	echo "make menuselect"
 	echo "make"
 	echo "make install"
@@ -174,9 +183,8 @@ fi
 #Assume we are not upgrading anything.
 if [ "$1" != "--update" ]
 then	
+	compile_dahdi_all
 	compile_libpri
-	compile_dahdhi_kernel
-	compile_dahdi_tools
 	#compile_asterisk
 	exit;
 fi
@@ -198,8 +206,9 @@ if [ "$1" == "--update" ]
 
 	if [ "$2" == "dahdi" ]
 		then
-		compile_dahdhi_kernel
-		compile_dahdi_tools
+		compile_dahdi_all
+		# compile_dahdhi_kernel
+		# compile_dahdi_tools
 		exit;
 	fi
 
@@ -211,9 +220,10 @@ if [ "$1" == "--update" ]
 
 	if [ "$2" == "all" ]
 		then
+		compile_dahdi_all
 		compile_libpri
-		compile_dahdhi_kernel
-		compile_dahdi_tools
+		# compile_dahdhi_kernel
+		# compile_dahdi_tools
 		compile_asterisk
 		exit;
 	fi
