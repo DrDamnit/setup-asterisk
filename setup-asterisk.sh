@@ -48,27 +48,28 @@ if [ -d /usr/src/libpri ]
 		exit;
 fi
 
-#Setup the system
+function build_reqs() 
+{
+	#Setup the system
+	
+	apt-get install make
+	apt-get install linux-source kernel-package
+	apt-get install linux-kernel-headers
+	apt-get install linux-headers
+	apt-get install linux-headers-`uname -r`
+	
+	#Install other needed stuff
+	
+	aptitude install libconfig-tiny-perl libcupsimage2 libcups2 libmime-lite-perl libemail-date-format-perl libfile-sync-perl libfreetype6 libspandsp1 libtiff-tools libtiff4 libjpeg62 libmime-types-perl libpaper-utils psutils libpaper1 ncurses ncurses-dev libncurses-dev libncurses-gst ncurses-term libnewt libnewt-dev libnewt-pic libxml2 libxml2-dev libspandsp-dev libspandsp1 pwgen
+	
+	apt --assume-yes build-dep asterisk 
+}
 
-apt-get install subversion
-apt-get install make
-apt-get install linux-source kernel-package
-apt-get install linux-kernel-headers
-apt-get install linux-headers
-#apt-get install linux-headers-2.6.31-14-generic-pae #<-- or whatever matches your version.
-apt-get install linux-headers-`uname -r`
-
-#Install other needed stuff
-
-aptitude install libconfig-tiny-perl libcupsimage2 libcups2 libmime-lite-perl libemail-date-format-perl libfile-sync-perl libfreetype6 libspandsp1 libtiff-tools libtiff4 libjpeg62 libmime-types-perl libpaper-utils psutils libpaper1 ncurses ncurses-dev libncurses-dev libncurses-gst ncurses-term libnewt libnewt-dev libnewt-pic libxml2 libxml2-dev libspandsp-dev libspandsp1 pwgen
-
-#Install LAMP if asked to...
-if [ "$1" = "--lamp" ];
-	then
+function build_lamp_stack()
+{
 	echo Installing LAMP...
 	apt-get install apache2 apachetop mysql-server mysql-client php5 php5-cli php5-gd php5-imagick php5-imap php5-mcrypt php5-mhash php5-mysql php5-pgsql libmysqlclient-dev libcurl3-openssl-dev
-	exit
-fi	
+}
 
 function compile_libpri ()
 {
@@ -86,7 +87,6 @@ function compile_dahdi_all() {
 	cd /usr/src/dahdi/
 	make all
 	make install
-	
 }
 
 function compile_dahdhi_kernel ()
@@ -144,88 +144,24 @@ setupUser() {
      echo $1 : $PASS >> setup.log
  }
 
-#Assume we are not upgrading anything.
-if [ "$1" == "--nonroot" ]
-then
-	echo -n "Checking to see if asterisk user exists..."
-	USEREXISTS=`grep -rin asterisk /etc/passwd`
-	if [ ${USEREXISTS} ]; then
-		echo "YES"
-	else
-		echo "NO"
-		echo "Setting up user..."
-		setupUser asterisk
-	fi
-	compile_dahdi_all
-	compile_libpri
-	echo "Fixing premissions. Setting asterisk:asterisk as the owner:group for the asterisk installation directory..."
-	chown -R asterisk:asterisk /usr/src/asterisk
-	echo "Everything but Asterisk has been compiled. Now, you need to create the non-root user ('asterisk'?), and compile using the following configure script:"
-	echo ""
-	echo "su asterisk"
-	echo "cd /usr/src/asterisk"
-	echo "make clean"
-	echo "./configure --prefix=/home/asterisk/asterisk-bin --sysconfdir=/home/asterisk/asterisk-bin --localstatedir=/home/asterisk/asterisk-bin"
-	echo "make menuselect"
-	echo "make"
-	echo "make install"
-	echo ""
-	# echo "Note: for reference, here's how to create the user:"
-	# echo ""
-	# echo 'adduser -c "Asterisk PBX" asterisk'
-	# echo "passwd asterisk"
-	# echo ""
-	# echo "SET A STRONG PASSWORD FOR THE ASTERISK USER!"
-	# echo "Use the pwgen utility to generate a 32 character random password to effectively disable it, then enable key authentication to manage the asterisk user"
-	exit;
-fi
-
-#Assume we are not upgrading anything.
-if [ "$1" != "--update" ]
-then	
-	compile_dahdi_all
-	compile_libpri
-	#compile_asterisk
-	exit;
-fi
-
-#If we are upgrading something, do only that.
-if [ "$1" == "--update" ]
-	then
-	if [ $# -eq 1 ]
-		then
-		echo "You asked me to update, but you didn't tell me WHAT to update.. Usage: `basename $0` --update [libpri | dahdi | asterisk | all]"
-		exit;
-	fi
-
-	if [ "$2" == "libpri" ]
-		then
-		compile_libpri
-		exit;
-	fi
-
-	if [ "$2" == "dahdi" ]
-		then
-		compile_dahdi_all
-		# compile_dahdhi_kernel
-		# compile_dahdi_tools
-		exit;
-	fi
-
-	if [ "$2" == "asterisk" ]
-		then
-		compile_asterisk
-		exit;
-	fi
-
-	if [ "$2" == "all" ]
-		then
-		compile_dahdi_all
-		compile_libpri
-		# compile_dahdhi_kernel
-		# compile_dahdi_tools
-		compile_asterisk
-		exit;
-	fi
-echo "Recompiles / upgrades completed. You will need to restart services for the new version to take effect."
-fi
+ case $1 in
+    'setup')
+        build_reqs
+        ;;
+    'dahdi'
+    	compile_dahdi_all
+    	;;
+    'libpri'
+    	compile_libpri
+    	;;
+    'asterisk'
+    	compile_asterisk
+    	;;
+    'new'
+    	compile_dahdi_all
+    	compile_libpri
+    	compile_asterisk
+    * )
+        usage
+        ;;
+esac
