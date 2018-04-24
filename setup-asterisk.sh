@@ -148,16 +148,16 @@ setupUser() {
     'setup')
         build_reqs
         ;;
-    'dahdi'
+    'dahdi')
     	compile_dahdi_all
     	;;
-    'libpri'
+    'libpri')
     	compile_libpri
     	;;
-    'asterisk'
+    'asterisk')
     	compile_asterisk
     	;;
-    'new'
+    'new')
     	compile_dahdi_all
     	compile_libpri
     	compile_asterisk
