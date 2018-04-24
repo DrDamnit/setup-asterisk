@@ -144,6 +144,27 @@ setupUser() {
      echo $1 : $PASS >> setup.log
  }
 
+usage() {
+    cat <<-'EOF'
+
+SUMMARY
+    This script is used to setup and install asterisk on Debian.
+
+USAGE:
+
+setup-asterisk.sh [command]
+
+Command list:
+
+  setup        Prepares the system and installs required dependencies.
+  dahdi        Installs the dahdi binaries.
+  libpri       Installs the libpri binaries.
+  asterisk     Installs asterisk
+  new          Performs all the installations in the correct order for a new
+                 installation.
+
+EOF
+}
  case $1 in
     'setup')
         build_reqs
@@ -161,6 +182,7 @@ setupUser() {
     	compile_dahdi_all
     	compile_libpri
     	compile_asterisk
+    	;;
     * )
         usage
         ;;
