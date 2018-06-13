@@ -153,7 +153,8 @@ REQMAP['/usr/src/libpri']='Libpri package not found. Please download from asteri
 
 for REQ in ${!REQMAP[@]}
 do
-    check_requirement $REQ ${REQMAP[@]}
+    echo ${REQMAP[@]}
+    check_requirements ${REQ} ${REQMAP[@]}
 done
 
 IFS=${BACK}
@@ -162,8 +163,6 @@ if [ `whoami` != 'root' ]; then
     echo "This must be run as root! Quitting."
     exit 1
 fi
-
-check_requirements
 
 case "$1" in
     help)
