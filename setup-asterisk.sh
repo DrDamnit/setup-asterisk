@@ -114,31 +114,7 @@ function setupUser() {
      echo $1 : $PASS >> setup.log
  }
 
-declare -A REQMAP
-BACK=$IFS
-IFS='|'
-REQMAP['/usr/src/asterisk']='Asterisk package not found. Please download from asterisk.org, and extract to /usr/src/asterisk.'
-REQMAP['/usr/src/dahdi']='Dahdi package not found. Please download from asterisk.org, and extract to /usr/src/dahdi. (Dahdi-complete package is recommended).'
-REQMAP['/usr/src/dahdi/linux']='Dahdi kernel package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/linux.'
-REQMAP['/usr/src/dahdi/tools']='Dahdi tools package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/tools.'
-REQMAP['/usr/src/libpri']='Libpri package not found. Please download from asterisk.org, and extract to /usr/src/libpri.'
-
-
-for REQ in ${!REQMAP[@]}
-do
-    check_requirement $REQ ${REQMAP[@]}
-done
-
-IFS=${BACK}
-
-if [ `whoami` != 'root' ]; then
-    echo "This must be run as root! Quitting."
-    exit 1
-fi
-
-check_requirements()
-
-show_help() {
+function show_help() {
     cat <<-'EOF'
 
 SUMMARY
@@ -164,6 +140,30 @@ Command list:
 EOF
 
 }
+
+declare -A REQMAP
+BACK=$IFS
+IFS='|'
+REQMAP['/usr/src/asterisk']='Asterisk package not found. Please download from asterisk.org, and extract to /usr/src/asterisk.'
+REQMAP['/usr/src/dahdi']='Dahdi package not found. Please download from asterisk.org, and extract to /usr/src/dahdi. (Dahdi-complete package is recommended).'
+REQMAP['/usr/src/dahdi/linux']='Dahdi kernel package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/linux.'
+REQMAP['/usr/src/dahdi/tools']='Dahdi tools package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/tools.'
+REQMAP['/usr/src/libpri']='Libpri package not found. Please download from asterisk.org, and extract to /usr/src/libpri.'
+
+
+for REQ in ${!REQMAP[@]}
+do
+    check_requirement $REQ ${REQMAP[@]}
+done
+
+IFS=${BACK}
+
+if [ `whoami` != 'root' ]; then
+    echo "This must be run as root! Quitting."
+    exit 1
+fi
+
+check_requirements
 
 case "$1" in
     help)
