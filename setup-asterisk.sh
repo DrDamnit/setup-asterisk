@@ -136,7 +136,7 @@ if [ `whoami` != 'root' ]; then
     exit 1
 fi
 
-check_requirements
+check_requirements()
 
 show_help() {
     cat <<-'EOF'
