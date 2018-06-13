@@ -1,74 +1,36 @@
-#~/bin/bash
-#Check the system for the required packages
-#How to use this script:
-#1. Download asterisk, libpri, and dahdi to /usr/src/
-#2. Extract them to asterisk/, libpri/, and dahdi/, respectively.
-#3. Run this script, and enjoy.
-#4. PS. If you want to install LAMP as well, include the --lamp parameter
-#If you want to install asterisk as a non-root user, use the --update parameter. (Reference: http://asteriskdocs.org/en/2nd_Edition/asterisk-book-html-chunk/asterisk-CHP-13-SECT-4.html)
+#!/bin/bash
+#
+# Installs asterisk by compiling and installing requirements and dependencies.
+#
+# What this script does
+# 0. Installs required packages via apt.
+# 1. Download asterisk, libpri, and dahdi to /usr/src/
+# 2. Extract them to asterisk/, libpri/, and dahdi/, respectively.
+# 3. Run this script, and enjoy.
+# 4. PS. If you want to install LAMP as well, include the --lamp parameter
+# If you want to install asterisk as a non-root user, use the --update parameter. (Reference: http://asteriskdocs.org/en/2nd_Edition/asterisk-book-html-chunk/asterisk-CHP-13-SECT-4.html)
 
-echo -ne Checking for asterisk source...
-if [ -d /usr/src/asterisk ]
-	then echo OK.
-	else 
-		echo NOT FOUND
-		echo Asterisk package not found. Please download from asterisk.org, and extract to /usr/src/asterisk.
-		exit;
-fi
-echo -ne Checking for dahdi...
-if [ -d /usr/src/dahdi ]
-	then echo OK.
-	else 
-		echo NOT FOUND
-		echo Dahdi package not found. Please download from asterisk.org, and extract to /usr/src/dahdi. \(Dahdi-complete package is recommended\).
-		exit;
-fi
-echo -ne Checking for dahdi kernel headers...
-if [ -d /usr/src/dahdi/linux ]
-	then echo OK.
-	else 
-		echo NOT FOUND
-		echo Dahdi kernel package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/linux.
-		exit;
-fi
-echo -ne Checking for dahdi tools...
-if [ -d /usr/src/dahdi/tools ]
-	then echo OK.
-	else 
-		echo NOT FOUND
-		echo Dahdi tools package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/tools.
-		exit;
-fi
-echo -ne Checking for libpri...
-if [ -d /usr/src/libpri ]
-	then echo OK.
-	else 
-		echo NOT FOUND
-		echo Libpri package not found. Please download from asterisk.org, and extract to /usr/src/libpri.
-		exit;
-fi
+function check_requirements() {
 
-#Setup the system
+    echo -ne Checking for $1...
+    if [ ! -d $1 ]; then
+        echo "NOT FOUND!"
+        echo $2
+        echo ""
+        exit 1
+    fi
 
-apt-get install subversion
-apt-get install make
-apt-get install linux-source kernel-package
-apt-get install linux-kernel-headers
-apt-get install linux-headers
-#apt-get install linux-headers-2.6.31-14-generic-pae #<-- or whatever matches your version.
-apt-get install linux-headers-`uname -r`
+    echo "OK"
 
-#Install other needed stuff
+}
 
-aptitude install libconfig-tiny-perl libcupsimage2 libcups2 libmime-lite-perl libemail-date-format-perl libfile-sync-perl libfreetype6 libspandsp1 libtiff-tools libtiff4 libjpeg62 libmime-types-perl libpaper-utils psutils libpaper1 ncurses ncurses-dev libncurses-dev libncurses-gst ncurses-term libnewt libnewt-dev libnewt-pic libxml2 libxml2-dev libspandsp-dev libspandsp1 pwgen
+function install_dependencies() {
 
-#Install LAMP if asked to...
-if [ "$1" = "--lamp" ];
-	then
-	echo Installing LAMP...
-	apt-get install apache2 apachetop mysql-server mysql-client php5 php5-cli php5-gd php5-imagick php5-imap php5-mcrypt php5-mhash php5-mysql php5-pgsql libmysqlclient-dev libcurl3-openssl-dev
-	exit
-fi	
+    apt -y install git make linux-source kernel-package linux-kernel-headers linux-headers-`uname -r`
+    apt -y install libconfig-tiny-perl libcupsimage2 libcups2 libmime-lite-perl libemail-date-format-perl libfile-sync-perl libfreetype6 libspandsp2 libtiff-tools libtiff5 libjpeg62-turbo libmime-types-perl libpaper-utils psutils libpaper1 ncurses-bin ncurses-dev libncurses5-dev libncurses-gst ncurses-term libnewt0.52 libnewt-dev libnewt-pic libxml2 libxml2-dev libspandsp-dev pwgen
+
+}
+
 
 function compile_libpri ()
 {
@@ -86,7 +48,7 @@ function compile_dahdi_all() {
 	cd /usr/src/dahdi/
 	make all
 	make install
-	
+
 }
 
 function compile_dahdhi_kernel ()
@@ -101,7 +63,7 @@ function compile_dahdhi_kernel ()
 	make install
 }
 
-function compile_dahdi_tools() 
+function compile_dahdi_tools()
 {
 	# Compile the tools
 
@@ -131,101 +93,110 @@ function compile_asterisk() {
 	make samples
 }
 
-setupUser() {
+function update_asterisk() {
+
+	cd /usr/src/asterisk
+	make clean
+	compile_asterisk
+
+}
+
+function setupUser() {
      PASS=`pwgen -cns 32 1`
      echo "Setting up user: $1"
      useradd -m $1
      usermod -s /bin/bash $1
- 
+
      echo "Setting password to: $PASS"
      echo "$1:$PASS" | chpasswd
- 
+
      echo "Saving information to setup.log"
      echo $1 : $PASS >> setup.log
  }
 
-#Assume we are not upgrading anything.
-if [ "$1" == "--nonroot" ]
-then
-	echo -n "Checking to see if asterisk user exists..."
-	USEREXISTS=`grep -rin asterisk /etc/passwd`
-	if [ ${USEREXISTS} ]; then
-		echo "YES"
-	else
-		echo "NO"
-		echo "Setting up user..."
-		setupUser asterisk
-	fi
-	compile_dahdi_all
-	compile_libpri
-	echo "Fixing premissions. Setting asterisk:asterisk as the owner:group for the asterisk installation directory..."
-	chown -R asterisk:asterisk /usr/src/asterisk
-	echo "Everything but Asterisk has been compiled. Now, you need to create the non-root user ('asterisk'?), and compile using the following configure script:"
-	echo ""
-	echo "su asterisk"
-	echo "cd /usr/src/asterisk"
-	echo "make clean"
-	echo "./configure --prefix=/home/asterisk/asterisk-bin --sysconfdir=/home/asterisk/asterisk-bin --localstatedir=/home/asterisk/asterisk-bin"
-	echo "make menuselect"
-	echo "make"
-	echo "make install"
-	echo ""
-	# echo "Note: for reference, here's how to create the user:"
-	# echo ""
-	# echo 'adduser -c "Asterisk PBX" asterisk'
-	# echo "passwd asterisk"
-	# echo ""
-	# echo "SET A STRONG PASSWORD FOR THE ASTERISK USER!"
-	# echo "Use the pwgen utility to generate a 32 character random password to effectively disable it, then enable key authentication to manage the asterisk user"
-	exit;
+declare -A REQMAP
+BACK=$IFS
+IFS='|'
+REQMAP['/usr/src/asterisk']='Asterisk package not found. Please download from asterisk.org, and extract to /usr/src/asterisk.'
+REQMAP['/usr/src/dahdi']='Dahdi package not found. Please download from asterisk.org, and extract to /usr/src/dahdi. (Dahdi-complete package is recommended).'
+REQMAP['/usr/src/dahdi/linux']='Dahdi kernel package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/linux.'
+REQMAP['/usr/src/dahdi/tools']='Dahdi tools package not found. Please download from asterisk.org, and extract to /usr/src/dahdi/tools.'
+REQMAP['/usr/src/libpri']='Libpri package not found. Please download from asterisk.org, and extract to /usr/src/libpri.'
+
+
+for REQ in ${!REQMAP[@]}
+do
+    check_requirement $REQ ${REQMAP[@]}
+done
+
+IFS=${BACK}
+
+if [ `whoami` != 'root' ]; then
+    echo "This must be run as root! Quitting."
+    exit 1
 fi
 
-#Assume we are not upgrading anything.
-if [ "$1" != "--update" ]
-then	
-	compile_dahdi_all
-	compile_libpri
-	#compile_asterisk
-	exit;
-fi
+check_requirements
 
-#If we are upgrading something, do only that.
-if [ "$1" == "--update" ]
-	then
-	if [ $# -eq 1 ]
-		then
-		echo "You asked me to update, but you didn't tell me WHAT to update.. Usage: `basename $0` --update [libpri | dahdi | asterisk | all]"
-		exit;
-	fi
+show_help() {
+    cat <<-'EOF'
 
-	if [ "$2" == "libpri" ]
-		then
-		compile_libpri
-		exit;
-	fi
+SUMMARY
+    This script will compile and install asterisk.
+    For support, file an issue at https://github.com/mjmunger/setup-asterisk/issues
 
-	if [ "$2" == "dahdi" ]
-		then
-		compile_dahdi_all
-		# compile_dahdhi_kernel
-		# compile_dahdi_tools
-		exit;
-	fi
+USAGE:
 
-	if [ "$2" == "asterisk" ]
-		then
-		compile_asterisk
-		exit;
-	fi
+setup-aseterisk.sh [command]
 
-	if [ "$2" == "all" ]
-		then
-		compile_dahdi_all
-		compile_libpri
-		# compile_dahdhi_kernel
-		# compile_dahdi_tools
-		compile_asterisk
-		exit;
-	fi
-echo "Recompiles / upgrades completed. You will need to restart services for the new version to take effect."
-fi
+Command list:
+
+  help          Show this help menu.
+  prep          Prep the system to compile and install asterisk.
+  libpri        Compile and install libpri ONLY.
+  dahdi-kernel  Compile and install the dahdi kernel files ONLY.
+  dahdi-tools   Compiles and install the dahdi tools ONLY.
+  dahdi-all     Compiles and installs dahdi kernel and and tools in the correct order.
+  asterisk      Compiles and installs asterisk ONLY.
+  update-asterisk  Cleans the current version of asterisk, and re-installs asterisk to update it.
+  complete      Compiles and installs all of the above in the correct order to setup Asterisk.
+
+EOF
+
+}
+
+case "$1" in
+    help)
+        show_help
+        ;;
+    prep)
+        install_dependencies
+        ;;
+    libpri)
+        compile_libpri
+        ;;
+    dahdi-kernel)
+        compile_dahdhi_kernel
+        ;;
+    dahdi-tools)
+        compile_dahdi_tools
+        ;;
+    dahdi-all)
+        compile_dahdi_all
+        ;;
+    asterisk)
+        compile_asterisk
+        ;;
+    update-asterisk)
+        update_asterisk
+        ;;
+    complete)
+        install_dependencies
+        compile_dahdi_all
+        compile_libpri
+        compile_asterisk
+        ;;
+    *)
+        show_help
+        ;;
+esac
