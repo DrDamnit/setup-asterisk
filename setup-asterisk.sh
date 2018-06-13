@@ -28,6 +28,8 @@ function install_dependencies() {
 
     apt -y install git make linux-source kernel-package linux-kernel-headers linux-headers-`uname -r`
     apt -y install libconfig-tiny-perl libcupsimage2 libcups2 libmime-lite-perl libemail-date-format-perl libfile-sync-perl libfreetype6 libspandsp2 libtiff-tools libtiff5 libjpeg62-turbo libmime-types-perl libpaper-utils psutils libpaper1 ncurses-bin ncurses-dev libncurses5-dev libncurses-gst ncurses-term libnewt0.52 libnewt-dev libnewt-pic libxml2 libxml2-dev libspandsp-dev pwgen
+    #Asterisk 13+ requirements
+    apt -y install libjansson-dev
 
 }
 
