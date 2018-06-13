@@ -150,6 +150,7 @@ function clean_module() {
     echo ${BUFFER}
     for PATH in ${BUFFER[@]}
     do
+        echo "Removing: ${PATH}"
         rm -v ${PATH}
     done
 }
