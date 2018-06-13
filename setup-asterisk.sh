@@ -147,7 +147,8 @@ EOF
 function clean_module() {
     echo "Cleaning: $1"
     BUFFER=`locate $1`
-    for PATH in ${BUFFER}
+    echo ${BUFFER}
+    for PATH in ${BUFFER[@]}
     do
         rm -v ${PATH}
     done
