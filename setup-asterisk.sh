@@ -210,6 +210,9 @@ case "$1" in
     update-asterisk)
         update_asterisk
         ;;
+    clean-modules)
+        clean_modules
+        ;;
     complete)
         install_dependencies
         compile_dahdi_all
