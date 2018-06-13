@@ -146,7 +146,6 @@ EOF
 
 function clean_module() {
     echo "Cleaning: $1"
-    updatedb
     for PATH in `locate $1`
     do
         rm -v ${PATH}
@@ -154,6 +153,9 @@ function clean_module() {
 }
 
 function clean_modules() {
+    echo -n "Running updatedb..."
+    updatedb
+    echo "done"
     MODULES=( format_mp3.so app_setcallerid.so app_dahdibarge.so cdr_mysql.so app_fax.so chan_bridge.so func_audiohookinherit.so bridge_multiplexed.so app_mysql.so chan_multicast_rtp.so app_meetme.so chan_agent.so format_sln16.so chan_local.so app_readfile.so app_parkandannounce.so )
 
     for MODULE in ${MODULES[@]}
