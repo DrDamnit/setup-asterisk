@@ -129,18 +129,37 @@ setup-aseterisk.sh [command]
 
 Command list:
 
-  help          Show this help menu.
-  prep          Prep the system to compile and install asterisk.
-  libpri        Compile and install libpri ONLY.
-  dahdi-kernel  Compile and install the dahdi kernel files ONLY.
-  dahdi-tools   Compiles and install the dahdi tools ONLY.
-  dahdi-all     Compiles and installs dahdi kernel and and tools in the correct order.
-  asterisk      Compiles and installs asterisk ONLY.
+  help             Show this help menu.
+  prep             Prep the system to compile and install asterisk.
+  libpri           Compile and install libpri ONLY.
+  dahdi-kernel     Compile and install the dahdi kernel files ONLY.
+  dahdi-tools      Compiles and install the dahdi tools ONLY.
+  dahdi-all        Compiles and installs dahdi kernel and and tools in the correct order.
+  asterisk         Compiles and installs asterisk ONLY.
   update-asterisk  Cleans the current version of asterisk, and re-installs asterisk to update it.
-  complete      Compiles and installs all of the above in the correct order to setup Asterisk.
+  clean-modules    Cleans asterisk compiled modules so newer versions can be installed.
+  complete         Compiles and installs all of the above in the correct order to setup Asterisk.
 
 EOF
 
+}
+
+function clean_module() {
+    echo "Cleaning: $1"
+    updatedb
+    for PATH in `locate $1`
+    do
+        rm -v ${PATH}
+    done
+}
+
+function clean_modules() {
+    MODULES=( format_mp3.so app_setcallerid.so app_dahdibarge.so cdr_mysql.so app_fax.so chan_bridge.so func_audiohookinherit.so bridge_multiplexed.so app_mysql.so chan_multicast_rtp.so app_meetme.so chan_agent.so format_sln16.so chan_local.so app_readfile.so app_parkandannounce.so )
+
+    for MODULE in ${MODULES[@]}
+    do
+        clean_module ${MODULE}
+    done
 }
 
 declare -A REQMAP
