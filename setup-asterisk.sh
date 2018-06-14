@@ -179,7 +179,6 @@ REQMAP['/usr/src/libpri']='Libpri package not found. Please download from asteri
 
 for REQ in ${!REQMAP[@]}
 do
-    echo ${REQMAP[@]}
     check_requirements ${REQ} ${REQMAP[@]}
 done
 
