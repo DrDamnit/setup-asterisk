@@ -211,6 +211,7 @@ case "$1" in
         compile_asterisk
         ;;
     update-asterisk)
+        clean_modules
         update_asterisk
         ;;
     clean-modules)
@@ -218,6 +219,7 @@ case "$1" in
         ;;
     complete)
         install_dependencies
+        clean_modules
         compile_dahdi_all
         compile_libpri
         compile_asterisk
